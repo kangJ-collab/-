@@ -1,0 +1,19 @@
+{
+  "name": "공수달력",
+  "short_name": "공수달력",
+  "description": "일별 공수 기록 달력",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1e2330",
+  "theme_color": "#1e2330",
+  "orientation": "portrait",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

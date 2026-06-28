@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>공수달력</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="공수달력">
+<meta name="theme-color" content="#1e2330">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --bg:#1e2330; --surface:#262d3d; --card:#2e3750; --border:#3a4460;
+  --text:#e8eaf0; --sub:#8892aa; --accent:#f5c842;
+  --gs-05:#2980b9;   /* 파랑 */
+  --gs-10:#222831;   /* 검정 */
+  --gs-15:#5a6478;   /* 회색 */
+  --gs-20:#c0392b;   /* 빨강 */
+  --off:#27ae60; --full:#e67e22;
+  --sun:#e74c3c; --sat:#5b9cf6;
+}
+body {
+  font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; max-width:480px; margin:0 auto; position:relative;
+  user-select:none;
+}
+
+/* ── HEADER ── */
+.hdr {
+  background:var(--surface); padding:13px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:100;
+}
+.hdr-nav { display:flex; align-items:center; gap:14px; }
+.nav-btn {
+  background:none; border:none; color:var(--accent);
+  font-size:22px; cursor:pointer; padding:2px 8px;
+  border-radius:6px; line-height:1;
+}
+.nav-btn:active { background:var(--border); }
+.hdr-title { font-size:18px; font-weight:700; color:var(--accent); }
+.hdr-sum { font-size:12px; color:var(--sub); }
+.hdr-sum b { color:var(--accent); }
+
+/* ── CALENDAR ── */
+.cal-wrap { padding:0 6px 12px; touch-action:pan-y; }
+.wday-row {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  padding:8px 0 5px;
+}
+.wday-row div { text-align:center; font-size:11px; font-weight:600; color:var(--sub); }
+.wday-row div:first-child { color:var(--sun); }
+.wday-row div:last-child  { color:var(--sat); }
+
+.cal-grid {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:2px;
+}
+.cell {
+  height:80px; background:var(--card); border-radius:8px;
+  padding:4px 3px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  position:relative; overflow:hidden;
+  transition:background .12s;
+}
+.cell:active { background:var(--border); }
+.cell.dim { opacity:.28; pointer-events:none; }
+.cell.today .dnum { outline:2px solid var(--accent); border-radius:50%; }
+
+.dnum {
+  font-size:12px; font-weight:700;
+  width:22px; height:22px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.cell.sun .dnum { color:var(--sun); }
+.cell.sat .dnum { color:var(--sat); }
+
+/* 공수 뱃지 */
+.badge {
+  font-size:11px; font-weight:800;
+  padding:2px 0; border-radius:4px;
+  width:100%; text-align:center; line-height:1.35;
+  flex-shrink:0;
+}
+.b-05  { background:var(--gs-05); color:#fff; }
+.b-10  { background:var(--gs-10); color:#e8eaf0; border:1px solid #3a4460; }
+.b-15  { background:var(--gs-15); color:#fff; }
+.b-20  { background:var(--gs-20); color:#fff; }
+.b-off { background:var(--off);   color:#fff; }
+.b-ful { background:var(--full);  color:#fff; }
+
+/* 현장명 — 6자 이상 줄바꿈, 칸 넓어지지 않음 */
+.sname {
+  font-size:9.5px; color:var(--sub);
+  width:100%; text-align:center;
+  word-break:keep-all; overflow-wrap:break-word;
+  line-height:1.2; display:block;
+  max-height:28px; overflow:hidden;
+}
+
+/* 연필 메모 버튼 */
+.memo-pin {
+  position:absolute; bottom:3px; right:3px;
+  font-size:10px; cursor:pointer; opacity:.7;
+  background:none; border:none; color:var(--accent); padding:0;
+  z-index:5;
+}
+
+/* 말풍선 툴팁 */
+.bubble {
+  position:fixed; z-index:500;
+  background:#fff; color:#222; border-radius:10px;
+  padding:8px 12px; max-width:200px;
+  font-size:12px; line-height:1.5;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+  pointer-events:none;
+  white-space:pre-wrap; word-break:break-all;
+}
+.bubble::after {
+  content:''; position:absolute; bottom:-7px; left:50%;
+  transform:translateX(-50%);
+  border:7px solid transparent; border-bottom:none;
+  border-top-color:#fff;
+}
+
+/* ── MONTH SUMMARY ── */
+.msum {
+  margin:0 6px 72px;
+  background:var(--surface); border-radius:12px;
+  padding:12px 14px;
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:6px; border:1px solid var(--border);
+}
+.msum-item { text-align:center; }
+.msum-lbl { font-size:10px; color:var(--sub); margin-bottom:3px; }
+.msum-val { font-size:17px; font-weight:700; color:var(--accent); }
+.msum-unit { font-size:10px; color:var(--sub); }
+
+/* ── DETAIL PAGE ── */
+#det {
+  display:none; position:fixed; inset:0;
+  background:var(--bg); z-index:200;
+  overflow-y:auto; max-width:480px; margin:0 auto;
+}
+.det-hdr {
+  background:var(--surface); padding:13px 18px;
+  display:flex; align-items:center; gap:12px;
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:10;
+}
+.back-btn { background:none; border:none; color:var(--accent); font-size:24px; cursor:pointer; line-height:1; }
+.det-title { font-size:16px; font-weight:700; color:var(--accent); }
+
+.det-body { padding:18px 16px; display:flex; flex-direction:column; gap:18px; }
+
+.flabel { font-size:11px; color:var(--sub); font-weight:600; letter-spacing:.04em; margin-bottom:5px; }
+
+.site-inp {
+  width:100%; background:none; border:none;
+  border-bottom:1.5px solid var(--accent);
+  color:var(--text); font-size:16px; padding:6px 0;
+  outline:none; font-family:inherit;
+}
+.site-inp::placeholder { color:var(--sub); }
+
+/* TABS */
+.tabs { display:flex; border-bottom:1px solid var(--border); }
+.tbtn {
+  flex:1; background:none; border:none; color:var(--sub);
+  font-size:14px; font-weight:600; padding:10px 0;
+  cursor:pointer; position:relative; font-family:inherit;
+}
+.tbtn.on { color:var(--accent); }
+.tbtn.on::after {
+  content:''; position:absolute; bottom:-1px; left:20%; right:20%;
+  height:2px; background:var(--accent); border-radius:2px;
+}
+.tpanel { display:none; }
+.tpanel.on { display:flex; flex-direction:column; gap:16px; padding-top:14px; }
+
+/* 단가 */
+.price-row {
+  display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--border); padding-bottom:10px;
+}
+.price-inp {
+  flex:1; background:none; border:none; color:var(--text);
+  font-size:18px; font-weight:600; text-align:right;
+  outline:none; font-family:inherit;
+}
+.price-inp::placeholder { color:var(--sub); font-size:14px; font-weight:400; }
+.price-unit { font-size:14px; color:var(--sub); }
+
+/* 공수 컨트롤 */
+.gs-ctrl { display:flex; align-items:center; justify-content:center; gap:10px; }
+.gs-btn {
+  width:70px; height:70px; border-radius:14px; border:none;
+  font-size:30px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .1s, filter .1s;
+  color:#1a1a1a;
+}
+.gs-btn:active { transform:scale(.92); filter:brightness(.82); }
+.gs-btn-m { background:#2980b9; color:#fff; }
+.gs-btn-p { background:var(--accent); }
+
+/* 공수 표시 — 색상도 뱃지룰 따름 */
+.gs-disp {
+  width:100px; height:70px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:30px; font-weight:800; border:1px solid var(--border);
+  transition:background .2s, color .2s;
+}
+
+/* 체크 */
+.chk-row { display:flex; gap:10px; }
+.chk-item {
+  flex:1; display:flex; align-items:center; gap:8px;
+  background:var(--card); border-radius:10px;
+  padding:12px 14px; cursor:pointer;
+  border:2px solid transparent; transition:border-color .15s;
+}
+.chk-item.on-off  { border-color:var(--off); }
+.chk-item.on-ful  { border-color:var(--full); }
+.chk-ico { font-size:18px; }
+.chk-txt { font-size:15px; font-weight:600; }
+
+/* 직접입력 */
+.direct-inp {
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); font-size:18px; font-weight:600;
+  text-align:center; padding:14px; width:100%;
+  outline:none; font-family:inherit;
+}
+.direct-inp::placeholder { color:var(--sub); font-size:13px; font-weight:400; }
+.direct-hint { font-size:11px; color:var(--sub); text-align:right; }
+
+/* 범례 */
+.legend { display:flex; flex-wrap:wrap; gap:8px; }
+.leg-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--sub); }
+.leg-dot {
+  width:28px; height:18px; border-radius:4px;
+  font-size:10px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; color:#fff;
+}
+
+/* 메모 탭 */
+.memo-ta {
+  width:100%; min-height:180px;
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  color:var(--text); font-size:15px; padding:14px;
+  outline:none; resize:none; font-family:inherit; line-height:1.6;
+}
+.memo-ta::placeholder { color:var(--sub); }
+
+/* 이전날 복사 힌트 */
+.copy-hint {
+  font-size:11px; color:var(--accent); cursor:pointer;
+  text-align:right; text-decoration:underline dotted;
+}
+
+/* 저장 */
+.save-wrap {
+  position:sticky; bottom:0; width:100%;
+  background:var(--surface); padding:12px 16px 22px;
+  border-top:1px solid var(--border);
+}
+.save-wrap button {
+  width:100%; background:var(--accent); color:#1a1a1a;
+  border:none; border-radius:12px; font-size:17px; font-weight:800;
+  padding:15px; cursor:pointer; font-family:inherit;
+  transition:filter .1s; letter-spacing:.05em;
+}
+.save-wrap button:active { filter:brightness(.83); }
+</style>
+</head>
+<body>
+
+<!-- 달력 페이지 -->
+<div id="cal-page">
+  <div class="hdr">
+    <div class="hdr-nav">
+      <button class="nav-btn" id="btn-prev">‹</button>
+      <div class="hdr-title" id="hdr-title"></div>
+      <button class="nav-btn" id="btn-next">›</button>
+    </div>
+    <div class="hdr-sum">총 <b id="hdr-gs">0.0</b> 공수</div>
+  </div>
+
+  <div class="cal-wrap" id="cal-wrap">
+    <div class="wday-row">
+      <div>일</div><div>월</div><div>화</div><div>수</div>
+      <div>목</div><div>금</div><div>토</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="msum">
+    <div class="msum-item">
+      <div class="msum-lbl">총 공수</div>
+      <div class="msum-val" id="ms-gs">0.0</div>
+      <div class="msum-unit">공수</div>
+    </div>
+    <div class="msum-item">
+      <div class="msum-lbl">예상 금액</div>
+      <div class="msum-val" id="ms-amt">-</div>
+      <div class="msum-unit">원</div>
+    </div>
+    <div class="msum-item">
+      <div class="msum-lbl">출근일수</div>
+      <div class="msum-val" id="ms-days">0</div>
+      <div class="msum-unit">일</div>
+    </div>
+  </div>
+</div>
+
+<!-- 말풍선 -->
+<div class="bubble" id="bubble" style="display:none"></div>
+
+<!-- 상세 페이지 -->
+<div id="det">
+  <div class="det-hdr">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div class="det-title" id="det-title"></div>
+  </div>
+
+  <div class="det-body">
+    <div>
+      <div class="flabel">현장명</div>
+      <input class="site-inp" id="site-inp" type="text" placeholder="현장명을 입력해주세요" autocomplete="off">
+    </div>
+
+    <div id="copy-hint-wrap"></div>
+
+    <div>
+      <div class="tabs">
+        <button class="tbtn on" onclick="switchTab('gs',this)">공수</button>
+        <button class="tbtn"    onclick="switchTab('memo',this)">메모</button>
+      </div>
+
+      <!-- 공수 탭 -->
+      <div class="tpanel on" id="tpanel-gs">
+        <div>
+          <div class="flabel">공수 단가</div>
+          <div class="price-row">
+            <input class="price-inp" id="price-inp" type="number" inputmode="numeric" placeholder="금액을 적어주세요">
+            <span class="price-unit">원</span>
+          </div>
+        </div>
+
+        <div class="gs-ctrl">
+          <button class="gs-btn gs-btn-m" onclick="adjGs(-0.5)">−</button>
+          <div class="gs-disp" id="gs-disp">1</div>
+          <button class="gs-btn gs-btn-p" onclick="adjGs(0.5)">+</button>
+        </div>
+
+        <div class="chk-row">
+          <div class="chk-item" id="chk-off" onclick="togChk('off')">
+            <span class="chk-ico" id="ico-off">○</span>
+            <span class="chk-txt">휴무</span>
+          </div>
+          <div class="chk-item" id="chk-ful" onclick="togChk('ful')">
+            <span class="chk-ico" id="ico-ful">○</span>
+            <span class="chk-txt">만근</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flabel">공수 직접입력</div>
+          <input class="direct-inp" id="dir-inp" type="number" inputmode="decimal" step="0.01" placeholder="1.75, 0.25 등 소수점 공수">
+          <div class="direct-hint" style="margin-top:4px">직접 입력 시 위 값보다 우선 적용됩니다</div>
+        </div>
+
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--gs-05)">0.5</div> 0.5 이하 (파랑)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--gs-10);border:1px solid #555">1.0</div> 1.0 (검정)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--gs-15)">1.5</div> 1.5 (회색)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--gs-20)">2.0</div> 2.0+ (빨강)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--off)">휴무</div></div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--full)">만근</div></div>
+        </div>
+      </div>
+
+      <!-- 메모 탭 -->
+      <div class="tpanel" id="tpanel-memo">
+        <textarea class="memo-ta" id="memo-ta" placeholder="메모를 입력해주세요."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-wrap">
+    <button onclick="saveEntry()">저장</button>
+  </div>
+</div>
+
+<script>
+// ── 상태 ──
+const TODAY = new Date();
+let CY = TODAY.getFullYear();
+let CM = TODAY.getMonth();
+let selKey = null;
+let selY, selM, selD;
+let gsVal = 1;
+let isOff = false;
+let isFul = false;
+
+// ── 스토리지 ──
+function key(y,m,d){ return `gs_${y}_${String(m+1).padStart(2,'0')}_${String(d).padStart(2,'0')}`; }
+function load(k){ try{ return JSON.parse(localStorage.getItem(k))||null; }catch{ return null; } }
+function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+
+// ── 공수 → 색상 클래스 ──
+function badgeClass(gs, isFull, isOff){
+  if(isOff) return 'b-off';
+  if(isFull) return 'b-ful';
+  if(gs >= 2.0) return 'b-20';
+  if(gs >= 1.5) return 'b-15';
+  if(gs >= 1.0) return 'b-10';
+  return 'b-05';
+}
+
+// ── 공수 표시색 (gs-disp) ──
+const dispColors = {
+  'b-05':  { bg:'#2980b9', color:'#fff' },
+  'b-10':  { bg:'#222831', color:'#e8eaf0' },
+  'b-15':  { bg:'#5a6478', color:'#fff' },
+  'b-20':  { bg:'#c0392b', color:'#fff' },
+  'b-off': { bg:'#27ae60', color:'#fff' },
+  'b-ful': { bg:'#e67e22', color:'#fff' },
+};
+function updateGsDisp(){
+  const diEl = document.getElementById('gs-disp');
+  const di = document.getElementById('dir-inp').value.trim();
+  const v = di !== '' ? parseFloat(di) : gsVal;
+  diEl.textContent = isNaN(v) ? gsVal : (v % 1 === 0 ? v.toFixed(0) : v);
+  const bc = badgeClass(isNaN(v)?gsVal:v, isFul, isOff);
+  const c = dispColors[bc];
+  diEl.style.background = c.bg;
+  diEl.style.color = c.color;
+}
+
+// ── 달력 렌더 ──
+function renderCal(){
+  document.getElementById('hdr-title').textContent =
+    `${CY}.${String(CM+1).padStart(2,'0')}`;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstDow = new Date(CY,CM,1).getDay();
+  const lastD = new Date(CY,CM+1,0).getDate();
+  const prevLastD = new Date(CY,CM,0).getDate();
+
+  let totGs=0, totAmt=0, workDays=0, hasPrice=false;
+
+  // 이전달 빈칸
+  for(let i=0;i<firstDow;i++){
+    const c = mkCell(prevLastD-firstDow+1+i, true, false, false, null, null);
+    grid.appendChild(c);
+  }
+
+  for(let d=1;d<=lastD;d++){
+    const date = new Date(CY,CM,d);
+    const dow = date.getDay();
+    const k = key(CY,CM,d);
+    const e = load(k);
+    const isTod = date.toDateString()===TODAY.toDateString();
+
+    const cell = document.createElement('div');
+    let cls = 'cell';
+    if(dow===0) cls+=' sun';
+    if(dow===6) cls+=' sat';
+    if(isTod)   cls+=' today';
+    cell.className = cls;
+    cell.onclick = ()=>openDet(CY,CM,d);
+
+    // 날짜 숫자
+    const dn = document.createElement('div');
+    dn.className='dnum'; dn.textContent=d;
+    cell.appendChild(dn);
+
+    if(e){
+      const gs = (e.directInput!=='' && e.directInput!=null)
+        ? parseFloat(e.directInput) : e.gongsu;
+
+      // 공수 뱃지 (0 이거나 데이터 없으면 뱃지 표시 안함)
+      const showBadge = e.isOff || (!isNaN(gs) && gs > 0);
+      if(showBadge){
+        const bc = badgeClass(gs, e.isFull, e.isOff);
+        const badge = document.createElement('div');
+        badge.className = 'badge '+bc;
+        badge.textContent = e.isOff ? '휴무' : (gs%1===0 ? gs.toFixed(2) : gs);
+        cell.appendChild(badge);
+        if(!e.isOff && !isNaN(gs) && gs>0){
+          totGs += gs; workDays++;
+          if(e.unitPrice){ totAmt+=gs*parseFloat(e.unitPrice); hasPrice=true; }
+        }
+      }
+
+      // 현장명 — 6자 이상 줄바꿈, overflow hidden
+      if(e.site){
+        const sn = document.createElement('div');
+        sn.className='sname';
+        // 6자마다 줄바꿈 삽입
+        const s = e.site;
+        sn.textContent = s.length>6
+          ? s.slice(0,6)+'\n'+s.slice(6,12)+(s.length>12?'…':'')
+          : s;
+        cell.appendChild(sn);
+      }
+
+      // 메모 연필
+      if(e.memo && e.memo.trim()){
+        const pin = document.createElement('button');
+        pin.className='memo-pin';
+        pin.textContent='✏️';
+        pin.title='메모 보기';
+        pin.onclick = ev => {
+          ev.stopPropagation();
+          showBubble(ev, e.memo);
+        };
+        cell.appendChild(pin);
+      }
+    }
+
+    grid.appendChild(cell);
+  }
+
+  // 남은칸
+  const used = firstDow+lastD;
+  const rem = used%7===0 ? 0 : 7-(used%7);
+  for(let i=1;i<=rem;i++){
+    const c=document.createElement('div');
+    c.className='cell dim';
+    const dn=document.createElement('div');
+    dn.className='dnum'; dn.textContent=i;
+    c.appendChild(dn); grid.appendChild(c);
+  }
+
+  // 요약
+  document.getElementById('hdr-gs').textContent  = totGs > 0 ? totGs.toFixed(2) : '0';
+  document.getElementById('ms-gs').textContent   = totGs > 0 ? totGs.toFixed(2) : '0';
+  document.getElementById('ms-days').textContent = workDays;
+  document.getElementById('ms-amt').textContent  = hasPrice ? Math.round(totAmt).toLocaleString() : '-';
+}
+
+function mkCell(d, dim){ // 빈칸용
+  const c=document.createElement('div');
+  c.className='cell'+(dim?' dim':'');
+  const dn=document.createElement('div');
+  dn.className='dnum'; dn.textContent=d;
+  c.appendChild(dn); return c;
+}
+
+// ── 월 이동 + 스와이프 ──
+function changeMonth(dir){
+  CM+=dir;
+  if(CM>11){CM=0;CY++;} if(CM<0){CM=11;CY--;}
+  renderCal();
+}
+
+// 스와이프
+let swX=0;
+const wrap = document.getElementById('cal-wrap');
+wrap.addEventListener('touchstart', e=>{ swX=e.touches[0].clientX; },{passive:true});
+wrap.addEventListener('touchend',   e=>{
+  const dx = e.changedTouches[0].clientX - swX;
+  if(Math.abs(dx)>50) changeMonth(dx<0?1:-1);
+},{passive:true});
+document.getElementById('btn-prev').onclick=()=>changeMonth(-1);
+document.getElementById('btn-next').onclick=()=>changeMonth(1);
+
+// ── 말풍선 ──
+let bubbleTimer=null;
+function showBubble(ev, text){
+  const bub=document.getElementById('bubble');
+  bub.textContent=text;
+  bub.style.display='block';
+  const rect=ev.target.getBoundingClientRect();
+  let top=rect.top-8-bub.offsetHeight;
+  let left=rect.left+rect.width/2-bub.offsetWidth/2;
+  if(top<8) top=rect.bottom+8;
+  bub.style.top=(top<0?8:top)+'px';
+  bub.style.left=Math.max(8,Math.min(left,window.innerWidth-bub.offsetWidth-8))+'px';
+  clearTimeout(bubbleTimer);
+  bubbleTimer=setTimeout(()=>{ bub.style.display='none'; },3000);
+}
+document.addEventListener('click', ()=>{
+  document.getElementById('bubble').style.display='none';
+});
+
+// ── 상세 페이지 ──
+function openDet(y,m,d){
+  selY=y; selM=m; selD=d;
+  selKey=key(y,m,d);
+  const date=new Date(y,m,d);
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('det-title').textContent=
+    `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')} (${days[date.getDay()]})`;
+
+  const e = load(selKey)||{};
+
+  // 이전날 현장명+단가 자동 채우기
+  const prevKey = getPrevKey(y,m,d);
+  const prevE = load(prevKey)||{};
+
+  document.getElementById('site-inp').value = e.site!==undefined ? e.site : (prevE.site||'');
+  document.getElementById('price-inp').value = e.unitPrice!==undefined ? e.unitPrice : (prevE.unitPrice||'');
+  document.getElementById('memo-ta').value = e.memo||'';
+
+  gsVal = e.gongsu!=null ? e.gongsu : 1;
+  isOff = e.isOff||false;
+  isFul = e.isFul||false;
+
+  document.getElementById('dir-inp').value =
+    (e.directInput!=='' && e.directInput!=null) ? e.directInput : '';
+
+  updateGsDisp();
+  updateChks();
+
+  // 힌트
+  const hw=document.getElementById('copy-hint-wrap');
+  hw.innerHTML='';
+  if(!e.site && prevE.site){
+    const hint=document.createElement('div');
+    hint.className='copy-hint';
+    hint.textContent=`← ${prevE.site} (전날 복사됨)`;
+    hw.appendChild(hint);
+  }
+
+  switchTab('gs', document.querySelector('.tbtn'));
+  document.getElementById('cal-page').style.display='none';
+  document.getElementById('det').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function getPrevKey(y,m,d){
+  const prev=new Date(y,m,d-1);
+  return key(prev.getFullYear(),prev.getMonth(),prev.getDate());
+}
+
+function goBack(){
+  document.getElementById('det').style.display='none';
+  document.getElementById('cal-page').style.display='';
+}
+
+// ── 공수 조작 ──
+function adjGs(delta){
+  gsVal = Math.max(0, Math.round((gsVal+delta)*100)/100);
+  document.getElementById('dir-inp').value='';
+  updateGsDisp();
+}
+
+document.getElementById('dir-inp').addEventListener('input', updateGsDisp);
+
+function updateChks(){
+  const offEl=document.getElementById('chk-off');
+  const fulEl=document.getElementById('chk-ful');
+  offEl.className='chk-item'+(isOff?' on-off':'');
+  document.getElementById('ico-off').textContent=isOff?'✓':'○';
+  fulEl.className='chk-item'+(isFul?' on-ful':'');
+  document.getElementById('ico-ful').textContent=isFul?'✓':'○';
+  updateGsDisp();
+}
+
+function togChk(t){
+  if(t==='off'){ isOff=!isOff; if(isOff)isFul=false; }
+  else          { isFul=!isFul; if(isFul)isOff=false; }
+  updateChks();
+}
+
+// ── 탭 ──
+function switchTab(name,btn){
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  document.getElementById('tpanel-'+name).classList.add('on');
+}
+
+// ── 저장 ──
+function saveEntry(){
+  const di=document.getElementById('dir-inp').value.trim();
+  const entry={
+    site: document.getElementById('site-inp').value.trim(),
+    unitPrice: document.getElementById('price-inp').value.trim(),
+    gongsu: gsVal,
+    directInput: di!=='' ? parseFloat(di) : '',
+    isOff, isFul,
+    memo: document.getElementById('memo-ta').value.trim(),
+  };
+  save(selKey,entry);
+  document.getElementById('det').style.display='none';
+  document.getElementById('cal-page').style.display='';
+  renderCal();
+}
+
+// ── 초기화 ──
+renderCal();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(r => console.log("SW registered:", r.scope))
+      .catch(e => console.log("SW failed:", e));
+  });
+}
+</script>
+</body>
+</html>
