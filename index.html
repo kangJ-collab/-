@@ -186,16 +186,17 @@ body {
 
 /* 단가 */
 .price-row {
-  display:flex; align-items:center; gap:8px;
-  border-bottom:1px solid var(--border); padding-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+  background:var(--card); border-radius:10px;
+  padding:12px 14px; border:1px solid var(--border);
 }
 .price-inp {
-  flex:1; background:none; border:none; color:var(--text);
-  font-size:18px; font-weight:600; text-align:right;
-  outline:none; font-family:inherit;
+  flex:1; min-width:0; background:none; border:none; color:var(--text);
+  font-size:18px; font-weight:600; text-align:left;
+  outline:none; font-family:inherit; width:100%;
 }
 .price-inp::placeholder { color:var(--sub); font-size:14px; font-weight:400; }
-.price-unit { font-size:14px; color:var(--sub); }
+.price-unit { font-size:15px; font-weight:600; color:var(--sub); flex-shrink:0; }
 
 /* 공수 컨트롤 */
 .gs-ctrl { display:flex; align-items:center; justify-content:center; gap:10px; }
