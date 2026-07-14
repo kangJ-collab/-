@@ -16,11 +16,12 @@
 :root {
   --bg:#1e2330; --surface:#262d3d; --card:#2e3750; --border:#3a4460;
   --text:#e8eaf0; --sub:#8892aa; --accent:#f5c842;
-  --gs-05:#2980b9;   /* 파랑 */
-  --gs-10:#222831;   /* 검정 */
-  --gs-15:#5a6478;   /* 회색 */
-  --gs-20:#c0392b;   /* 빨강 */
-  --off:#27ae60; --full:#e67e22;
+  --gs-05:#2980b9;
+  --gs-10:#222831;
+  --gs-15:#5a6478;
+  --gs-20:#c0392b;
+  --off:#27ae60;
+  --bonus:#9b59b6;
   --sun:#e74c3c; --sat:#5b9cf6;
 }
 body {
@@ -58,11 +59,10 @@ body {
 .wday-row div:first-child { color:var(--sun); }
 .wday-row div:last-child  { color:var(--sat); }
 
-.cal-grid {
-  display:grid; grid-template-columns:repeat(7,1fr); gap:2px;
-}
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+
 .cell {
-  height:80px; background:var(--card); border-radius:8px;
+  height:86px; background:var(--card); border-radius:8px;
   padding:4px 3px; cursor:pointer;
   display:flex; flex-direction:column; align-items:center; gap:2px;
   position:relative; overflow:hidden;
@@ -93,9 +93,17 @@ body {
 .b-15  { background:var(--gs-15); color:#fff; }
 .b-20  { background:var(--gs-20); color:#fff; }
 .b-off { background:var(--off);   color:#fff; }
-.b-ful { background:var(--full);  color:#fff; }
 
-/* 현장명 — 6자 이상 줄바꿈, 칸 넓어지지 않음 */
+/* 주차/월차 보너스 뱃지 */
+.bonus-badge {
+  font-size:9px; font-weight:800;
+  padding:1px 3px; border-radius:3px;
+  width:100%; text-align:center; line-height:1.4;
+  background:var(--bonus); color:#fff;
+  flex-shrink:0;
+}
+
+/* 현장명 */
 .sname {
   font-size:9.5px; color:var(--sub);
   width:100%; text-align:center;
@@ -104,7 +112,7 @@ body {
   max-height:28px; overflow:hidden;
 }
 
-/* 연필 메모 버튼 */
+/* 메모 연필 */
 .memo-pin {
   position:absolute; bottom:3px; right:3px;
   font-size:10px; cursor:pointer; opacity:.7;
@@ -112,7 +120,7 @@ body {
   z-index:5;
 }
 
-/* 말풍선 툴팁 */
+/* 말풍선 */
 .bubble {
   position:fixed; z-index:500;
   background:#fff; color:#222; border-radius:10px;
@@ -131,16 +139,32 @@ body {
 
 /* ── MONTH SUMMARY ── */
 .msum {
-  margin:0 6px 72px;
+  margin:0 6px 8px;
   background:var(--surface); border-radius:12px;
   padding:12px 14px;
-  display:grid; grid-template-columns:1fr 1fr 1fr;
+  display:grid; grid-template-columns:repeat(4,1fr);
   gap:6px; border:1px solid var(--border);
 }
 .msum-item { text-align:center; }
 .msum-lbl { font-size:10px; color:var(--sub); margin-bottom:3px; }
-.msum-val { font-size:17px; font-weight:700; color:var(--accent); }
+.msum-val { font-size:15px; font-weight:700; color:var(--accent); }
 .msum-unit { font-size:10px; color:var(--sub); }
+
+/* 주차/월차 요약 */
+.bonus-sum {
+  margin:0 6px 72px;
+  background:var(--surface); border-radius:12px;
+  padding:10px 14px;
+  display:flex; gap:8px;
+  border:1px solid var(--border);
+}
+.bonus-sum-item {
+  flex:1; text-align:center;
+  background:var(--card); border-radius:8px; padding:8px 4px;
+}
+.bonus-sum-lbl { font-size:10px; color:var(--sub); margin-bottom:2px; }
+.bonus-sum-val { font-size:15px; font-weight:700; color:var(--bonus); }
+.bonus-sum-unit { font-size:10px; color:var(--sub); }
 
 /* ── DETAIL PAGE ── */
 #det {
@@ -158,7 +182,6 @@ body {
 .det-title { font-size:16px; font-weight:700; color:var(--accent); }
 
 .det-body { padding:18px 16px; display:flex; flex-direction:column; gap:18px; }
-
 .flabel { font-size:11px; color:var(--sub); font-weight:600; letter-spacing:.04em; margin-bottom:5px; }
 
 .site-inp {
@@ -205,13 +228,11 @@ body {
   font-size:30px; font-weight:700; cursor:pointer;
   display:flex; align-items:center; justify-content:center;
   transition:transform .1s, filter .1s;
-  color:#1a1a1a;
 }
 .gs-btn:active { transform:scale(.92); filter:brightness(.82); }
 .gs-btn-m { background:#2980b9; color:#fff; }
-.gs-btn-p { background:var(--accent); }
+.gs-btn-p { background:var(--accent); color:#1a1a1a; }
 
-/* 공수 표시 — 색상도 뱃지룰 따름 */
 .gs-disp {
   width:100px; height:70px; border-radius:14px;
   display:flex; align-items:center; justify-content:center;
@@ -219,7 +240,7 @@ body {
   transition:background .2s, color .2s;
 }
 
-/* 체크 */
+/* 체크 — 휴무만 */
 .chk-row { display:flex; gap:10px; }
 .chk-item {
   flex:1; display:flex; align-items:center; gap:8px;
@@ -227,8 +248,7 @@ body {
   padding:12px 14px; cursor:pointer;
   border:2px solid transparent; transition:border-color .15s;
 }
-.chk-item.on-off  { border-color:var(--off); }
-.chk-item.on-ful  { border-color:var(--full); }
+.chk-item.on-off { border-color:var(--off); }
 .chk-ico { font-size:18px; }
 .chk-txt { font-size:15px; font-weight:600; }
 
@@ -260,7 +280,6 @@ body {
 }
 .memo-ta::placeholder { color:var(--sub); }
 
-/* 이전날 복사 힌트 */
 .copy-hint {
   font-size:11px; color:var(--accent); cursor:pointer;
   text-align:right; text-decoration:underline dotted;
@@ -291,7 +310,7 @@ body {
       <div class="hdr-title" id="hdr-title"></div>
       <button class="nav-btn" id="btn-next">›</button>
     </div>
-    <div class="hdr-sum">총 <b id="hdr-gs">0.0</b> 공수</div>
+    <div class="hdr-sum">총 <b id="hdr-gs">0</b> 공수</div>
   </div>
 
   <div class="cal-wrap" id="cal-wrap">
@@ -305,18 +324,36 @@ body {
   <div class="msum">
     <div class="msum-item">
       <div class="msum-lbl">총 공수</div>
-      <div class="msum-val" id="ms-gs">0.0</div>
+      <div class="msum-val" id="ms-gs">0</div>
       <div class="msum-unit">공수</div>
     </div>
     <div class="msum-item">
-      <div class="msum-lbl">예상 금액</div>
-      <div class="msum-val" id="ms-amt">-</div>
-      <div class="msum-unit">원</div>
+      <div class="msum-lbl">주차</div>
+      <div class="msum-val" id="ms-wk" style="color:var(--bonus)">0</div>
+      <div class="msum-unit">공수</div>
+    </div>
+    <div class="msum-item">
+      <div class="msum-lbl">월차</div>
+      <div class="msum-val" id="ms-mc" style="color:var(--bonus)">0</div>
+      <div class="msum-unit">공수</div>
     </div>
     <div class="msum-item">
       <div class="msum-lbl">출근일수</div>
       <div class="msum-val" id="ms-days">0</div>
       <div class="msum-unit">일</div>
+    </div>
+  </div>
+
+  <div class="bonus-sum">
+    <div class="bonus-sum-item">
+      <div class="bonus-sum-lbl">실 공수 합계</div>
+      <div class="bonus-sum-val" id="ms-total">0</div>
+      <div class="bonus-sum-unit">(공수+주차+월차)</div>
+    </div>
+    <div class="bonus-sum-item">
+      <div class="bonus-sum-lbl">예상 금액</div>
+      <div class="bonus-sum-val" id="ms-amt">-</div>
+      <div class="bonus-sum-unit">원</div>
     </div>
   </div>
 </div>
@@ -362,13 +399,9 @@ body {
         </div>
 
         <div class="chk-row">
-          <div class="chk-item" id="chk-off" onclick="togChk('off')">
+          <div class="chk-item" id="chk-off" onclick="togChk()">
             <span class="chk-ico" id="ico-off">○</span>
             <span class="chk-txt">휴무</span>
-          </div>
-          <div class="chk-item" id="chk-ful" onclick="togChk('ful')">
-            <span class="chk-ico" id="ico-ful">○</span>
-            <span class="chk-txt">만근</span>
           </div>
         </div>
 
@@ -384,7 +417,7 @@ body {
           <div class="leg-item"><div class="leg-dot" style="background:var(--gs-15)">1.5</div> 1.5 (회색)</div>
           <div class="leg-item"><div class="leg-dot" style="background:var(--gs-20)">2.0</div> 2.0+ (빨강)</div>
           <div class="leg-item"><div class="leg-dot" style="background:var(--off)">휴무</div></div>
-          <div class="leg-item"><div class="leg-dot" style="background:var(--full)">만근</div></div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--bonus)">주차</div> 주/월차 +1.0</div>
         </div>
       </div>
 
@@ -401,49 +434,122 @@ body {
 </div>
 
 <script>
-// ── 상태 ──
 const TODAY = new Date();
 let CY = TODAY.getFullYear();
 let CM = TODAY.getMonth();
-let selKey = null;
-let selY, selM, selD;
-let gsVal = 1;
-let isOff = false;
-let isFul = false;
+let selKey = null, selY, selM, selD;
+let gsVal = 1, isOff = false;
 
 // ── 스토리지 ──
 function key(y,m,d){ return `gs_${y}_${String(m+1).padStart(2,'0')}_${String(d).padStart(2,'0')}`; }
 function load(k){ try{ return JSON.parse(localStorage.getItem(k))||null; }catch{ return null; } }
 function save(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
 
-// ── 공수 → 색상 클래스 ──
-function badgeClass(gs, isFull, isOff){
+// ── 공수 실제값 ──
+function entryGs(e){
+  if(!e) return 0;
+  if(e.isOff) return 0;
+  const v = (e.directInput!=='' && e.directInput!=null) ? parseFloat(e.directInput) : e.gongsu;
+  return (!isNaN(v) && v > 0) ? v : 0;
+}
+
+// ── 뱃지 색상 ──
+function badgeClass(gs, isOff){
   if(isOff) return 'b-off';
-  if(isFull) return 'b-ful';
   if(gs >= 2.0) return 'b-20';
   if(gs >= 1.5) return 'b-15';
   if(gs >= 1.0) return 'b-10';
   return 'b-05';
 }
 
-// ── 공수 표시색 (gs-disp) ──
 const dispColors = {
-  'b-05':  { bg:'#2980b9', color:'#fff' },
-  'b-10':  { bg:'#222831', color:'#e8eaf0' },
-  'b-15':  { bg:'#5a6478', color:'#fff' },
-  'b-20':  { bg:'#c0392b', color:'#fff' },
-  'b-off': { bg:'#27ae60', color:'#fff' },
-  'b-ful': { bg:'#e67e22', color:'#fff' },
+  'b-05': { bg:'#2980b9', color:'#fff' },
+  'b-10': { bg:'#222831', color:'#e8eaf0' },
+  'b-15': { bg:'#5a6478', color:'#fff' },
+  'b-20': { bg:'#c0392b', color:'#fff' },
+  'b-off':{ bg:'#27ae60', color:'#fff' },
 };
+
 function updateGsDisp(){
   const diEl = document.getElementById('gs-disp');
   const di = document.getElementById('dir-inp').value.trim();
   const v = di !== '' ? parseFloat(di) : gsVal;
   diEl.textContent = isNaN(v) ? gsVal : (v % 1 === 0 ? v.toFixed(0) : v);
-  const bc = badgeClass(isNaN(v)?gsVal:v, isFul, isOff);
+  const bc = isOff ? 'b-off' : badgeClass(isNaN(v)?gsVal:v, false);
   const c = dispColors[bc];
   diEl.style.background = c.bg;
   diEl.style.color = c.color;
+}
+
+// ── 주차/월차 계산 ──
+// 해당 월의 각 날짜별 주차보너스(일요일에 표시), 월차보너스(마지막날에 표시) 계산
+function calcBonus(y, m){
+  const lastD = new Date(y, m+1, 0).getDate();
+
+  // 해당 월 전체 평일(월~금) 출근 여부 맵
+  function isWorked(d){
+    const e = load(key(y,m,d));
+    return entryGs(e) > 0;
+  }
+
+  // 주차: 월~금 기준, 월요일~일요일 단위로 주를 나눔
+  // 일요일(dow=0) 칸에 그 주의 월~금 모두 출근했으면 주차 표시
+  const weekBonusDays = new Set(); // 주차 뱃지 붙을 일요일 날짜
+
+  for(let d=1; d<=lastD; d++){
+    const dow = new Date(y,m,d).getDay();
+    if(dow === 0){ // 일요일 → 이 주의 월~금 체크
+      // 이 일요일이 속한 주의 월요일~금요일
+      // 일요일 d 기준: 전날(토)=d-1, 금=d-2, 목=d-3, 수=d-4, 화=d-5, 월=d-6
+      let allWorked = true;
+      for(let offset=6; offset>=2; offset--){ // 월(6일전)~금(2일전)
+        const wd = d - offset;
+        if(wd < 1 || wd > lastD){ allWorked=false; break; } // 해당 월 범위 밖
+        const wdow = new Date(y,m,wd).getDay();
+        if(wdow>=1 && wdow<=5){ // 평일만
+          if(!isWorked(wd)){ allWorked=false; break; }
+        }
+      }
+      if(allWorked) weekBonusDays.add(d);
+    }
+  }
+
+  // 마지막 주 처리: 마지막 일요일 이후 남은 월~금이 있으면
+  // → 그 주 마지막 날(lastD)에 주차 뱃지
+  {
+    const lastDow = new Date(y,m,lastD).getDay();
+    // lastD가 일요일이 아닌 경우, 마지막 주의 월~금 구간
+    if(lastDow !== 0){
+      // 이 주의 월요일 찾기
+      const monOffset = lastDow === 0 ? 0 : lastDow - 1; // 일=0이므로 위에서 처리
+      // lastDow: 1=월,2=화,...,6=토
+      // 이 주 월요일 = lastD - (lastDow - 1)
+      const monD = lastD - (lastDow === 0 ? 6 : lastDow - 1);
+      let allWorked = true;
+      for(let wd=monD; wd<=lastD; wd++){
+        const wdow = new Date(y,m,wd).getDay();
+        if(wdow>=1 && wdow<=5){
+          if(!isWorked(wd)){ allWorked=false; break; }
+        }
+      }
+      if(allWorked && monD>=1) weekBonusDays.add(lastD);
+    }
+  }
+
+  // 월차: 해당 월 모든 평일(월~금) 출근 → 마지막날에 월차 1.0
+  let monthBonus = false;
+  {
+    let allMonthWorked = true;
+    for(let d=1; d<=lastD; d++){
+      const dow = new Date(y,m,d).getDay();
+      if(dow>=1 && dow<=5){
+        if(!isWorked(d)){ allMonthWorked=false; break; }
+      }
+    }
+    if(allMonthWorked) monthBonus = true;
+  }
+
+  return { weekBonusDays, monthBonus, lastD };
 }
 
 // ── 달력 렌더 ──
@@ -455,87 +561,92 @@ function renderCal(){
   grid.innerHTML = '';
 
   const firstDow = new Date(CY,CM,1).getDay();
-  const lastD = new Date(CY,CM+1,0).getDate();
-  const prevLastD = new Date(CY,CM,0).getDate();
+  const lastD    = new Date(CY,CM+1,0).getDate();
+  const prevLastD= new Date(CY,CM,0).getDate();
 
-  let totGs=0, totAmt=0, workDays=0, hasPrice=false;
+  const { weekBonusDays, monthBonus } = calcBonus(CY, CM);
+
+  let totGs=0, totWk=0, totMc=0, totAmt=0, workDays=0, hasPrice=false;
 
   // 이전달 빈칸
   for(let i=0;i<firstDow;i++){
-    const c = mkCell(prevLastD-firstDow+1+i, true, false, false, null, null);
-    grid.appendChild(c);
+    const c=document.createElement('div');
+    c.className='cell dim';
+    const dn=document.createElement('div');
+    dn.className='dnum'; dn.textContent=prevLastD-firstDow+1+i;
+    c.appendChild(dn); grid.appendChild(c);
   }
 
   for(let d=1;d<=lastD;d++){
     const date = new Date(CY,CM,d);
-    const dow = date.getDay();
-    const k = key(CY,CM,d);
-    const e = load(k);
-    const isTod = date.toDateString()===TODAY.toDateString();
+    const dow  = date.getDay();
+    const k    = key(CY,CM,d);
+    const e    = load(k);
+    const isTod= date.toDateString()===TODAY.toDateString();
 
     const cell = document.createElement('div');
-    let cls = 'cell';
+    let cls='cell';
     if(dow===0) cls+=' sun';
     if(dow===6) cls+=' sat';
     if(isTod)   cls+=' today';
-    cell.className = cls;
-    cell.onclick = ()=>openDet(CY,CM,d);
+    cell.className=cls;
+    cell.onclick=()=>openDet(CY,CM,d);
 
-    // 날짜 숫자
-    const dn = document.createElement('div');
+    const dn=document.createElement('div');
     dn.className='dnum'; dn.textContent=d;
     cell.appendChild(dn);
 
-    if(e){
-      const gs = (e.directInput!=='' && e.directInput!=null)
-        ? parseFloat(e.directInput) : e.gongsu;
+    const gs = e ? entryGs(e) : 0;
+    const showBadge = e && (e.isOff || gs > 0);
 
-      // 공수 뱃지 (0 이거나 데이터 없으면 뱃지 표시 안함)
-      const showBadge = e.isOff || (!isNaN(gs) && gs > 0);
-      if(showBadge){
-        const bc = badgeClass(gs, e.isFull, e.isOff);
-        const badge = document.createElement('div');
-        badge.className = 'badge '+bc;
-        badge.textContent = e.isOff ? '휴무' : (gs%1===0 ? gs.toFixed(2) : gs);
-        cell.appendChild(badge);
-        if(!e.isOff && !isNaN(gs) && gs>0){
-          totGs += gs; workDays++;
-          if(e.unitPrice){ totAmt+=gs*parseFloat(e.unitPrice); hasPrice=true; }
-        }
-      }
+    if(showBadge){
+      const bc = badgeClass(gs, e.isOff);
+      const badge=document.createElement('div');
+      badge.className='badge '+bc;
+      badge.textContent = e.isOff ? '휴무' : (gs%1===0 ? gs.toFixed(2) : gs);
+      cell.appendChild(badge);
 
-      // 현장명 — 6자 이상 줄바꿈, overflow hidden
-      if(e.site){
-        const sn = document.createElement('div');
-        sn.className='sname';
-        // 6자마다 줄바꿈 삽입
-        const s = e.site;
-        sn.textContent = s.length>6
-          ? s.slice(0,6)+'\n'+s.slice(6,12)+(s.length>12?'…':'')
-          : s;
-        cell.appendChild(sn);
+      if(!e.isOff && gs>0){
+        totGs+=gs; workDays++;
+        if(e.unitPrice){ totAmt+=gs*parseFloat(e.unitPrice); hasPrice=true; }
       }
+    }
 
-      // 메모 연필
-      if(e.memo && e.memo.trim()){
-        const pin = document.createElement('button');
-        pin.className='memo-pin';
-        pin.textContent='✏️';
-        pin.title='메모 보기';
-        pin.onclick = ev => {
-          ev.stopPropagation();
-          showBubble(ev, e.memo);
-        };
-        cell.appendChild(pin);
-      }
+    // 주차 뱃지 (일요일 or 마지막주 마지막날)
+    const isWeekBonus  = weekBonusDays.has(d);
+    const isMonthBonus = monthBonus && d===lastD;
+
+    if(isWeekBonus || isMonthBonus){
+      const labels = [];
+      if(isWeekBonus)  { labels.push('주차+1.0'); totWk+=1; }
+      if(isMonthBonus) { labels.push('월차+1.0'); totMc+=1; }
+      const bb=document.createElement('div');
+      bb.className='bonus-badge';
+      bb.textContent=labels.join(' ');
+      cell.appendChild(bb);
+    }
+
+    if(e && e.site){
+      const sn=document.createElement('div');
+      sn.className='sname';
+      const s=e.site;
+      sn.textContent=s.length>6 ? s.slice(0,6)+'\n'+s.slice(6,12)+(s.length>12?'…':'') : s;
+      cell.appendChild(sn);
+    }
+
+    if(e && e.memo && e.memo.trim()){
+      const pin=document.createElement('button');
+      pin.className='memo-pin'; pin.textContent='✏️';
+      pin.onclick=ev=>{ ev.stopPropagation(); showBubble(ev,e.memo); };
+      cell.appendChild(pin);
     }
 
     grid.appendChild(cell);
   }
 
   // 남은칸
-  const used = firstDow+lastD;
-  const rem = used%7===0 ? 0 : 7-(used%7);
+  const used=firstDow+lastD;
+  const rem=used%7===0?0:7-(used%7);
   for(let i=1;i<=rem;i++){
     const c=document.createElement('div');
     c.className='cell dim';
@@ -544,19 +655,30 @@ function renderCal(){
     c.appendChild(dn); grid.appendChild(c);
   }
 
-  // 요약
-  document.getElementById('hdr-gs').textContent  = totGs > 0 ? totGs.toFixed(2) : '0';
-  document.getElementById('ms-gs').textContent   = totGs > 0 ? totGs.toFixed(2) : '0';
+  const totalAll = totGs+totWk+totMc;
+  const fmtGs = v => v%1===0 ? v.toFixed(0) : v.toFixed(2);
+
+  document.getElementById('hdr-gs').textContent  = fmtGs(totalAll);
+  document.getElementById('ms-gs').textContent   = fmtGs(totGs);
+  document.getElementById('ms-wk').textContent   = fmtGs(totWk);
+  document.getElementById('ms-mc').textContent   = fmtGs(totMc);
   document.getElementById('ms-days').textContent = workDays;
-  document.getElementById('ms-amt').textContent  = hasPrice ? Math.round(totAmt).toLocaleString() : '-';
+  document.getElementById('ms-total').textContent= fmtGs(totalAll);
+  document.getElementById('ms-amt').textContent  = hasPrice
+    ? Math.round(totAmt + (totWk+totMc) * avgUnitPrice(CY,CM)).toLocaleString() : '-';
 }
 
-function mkCell(d, dim){ // 빈칸용
-  const c=document.createElement('div');
-  c.className='cell'+(dim?' dim':'');
-  const dn=document.createElement('div');
-  dn.className='dnum'; dn.textContent=d;
-  c.appendChild(dn); return c;
+// 단가 평균 (주차/월차 금액 계산용)
+function avgUnitPrice(y,m){
+  const lastD=new Date(y,m+1,0).getDate();
+  let sum=0, cnt=0;
+  for(let d=1;d<=lastD;d++){
+    const e=load(key(y,m,d));
+    if(e && e.unitPrice && parseFloat(e.unitPrice)>0){
+      sum+=parseFloat(e.unitPrice); cnt++;
+    }
+  }
+  return cnt>0 ? sum/cnt : 0;
 }
 
 // ── 월 이동 + 스와이프 ──
@@ -565,85 +687,75 @@ function changeMonth(dir){
   if(CM>11){CM=0;CY++;} if(CM<0){CM=11;CY--;}
   renderCal();
 }
-
-// 스와이프
 let swX=0;
-const wrap = document.getElementById('cal-wrap');
-wrap.addEventListener('touchstart', e=>{ swX=e.touches[0].clientX; },{passive:true});
-wrap.addEventListener('touchend',   e=>{
-  const dx = e.changedTouches[0].clientX - swX;
+const calWrap=document.getElementById('cal-wrap');
+calWrap.addEventListener('touchstart',e=>{swX=e.touches[0].clientX;},{passive:true});
+calWrap.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-swX;
   if(Math.abs(dx)>50) changeMonth(dx<0?1:-1);
 },{passive:true});
 document.getElementById('btn-prev').onclick=()=>changeMonth(-1);
 document.getElementById('btn-next').onclick=()=>changeMonth(1);
 
 // ── 말풍선 ──
-let bubbleTimer=null;
-function showBubble(ev, text){
+let bubTimer=null;
+function showBubble(ev,text){
   const bub=document.getElementById('bubble');
-  bub.textContent=text;
-  bub.style.display='block';
+  bub.textContent=text; bub.style.display='block';
   const rect=ev.target.getBoundingClientRect();
   let top=rect.top-8-bub.offsetHeight;
   let left=rect.left+rect.width/2-bub.offsetWidth/2;
   if(top<8) top=rect.bottom+8;
   bub.style.top=(top<0?8:top)+'px';
   bub.style.left=Math.max(8,Math.min(left,window.innerWidth-bub.offsetWidth-8))+'px';
-  clearTimeout(bubbleTimer);
-  bubbleTimer=setTimeout(()=>{ bub.style.display='none'; },3000);
+  clearTimeout(bubTimer);
+  bubTimer=setTimeout(()=>{bub.style.display='none';},3000);
 }
-document.addEventListener('click', ()=>{
-  document.getElementById('bubble').style.display='none';
-});
+document.addEventListener('click',()=>{document.getElementById('bubble').style.display='none';});
 
 // ── 상세 페이지 ──
 function openDet(y,m,d){
-  selY=y; selM=m; selD=d;
-  selKey=key(y,m,d);
+  selY=y; selM=m; selD=d; selKey=key(y,m,d);
   const date=new Date(y,m,d);
   const days=['일','월','화','수','목','금','토'];
   document.getElementById('det-title').textContent=
     `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')} (${days[date.getDay()]})`;
 
-  const e = load(selKey)||{};
+  const e=load(selKey)||{};
+  const prevKey=getPrevKey(y,m,d);
+  const prevE=load(prevKey)||{};
 
-  // 이전날 현장명+단가 자동 채우기
-  const prevKey = getPrevKey(y,m,d);
-  const prevE = load(prevKey)||{};
-
-  document.getElementById('site-inp').value = e.site!==undefined ? e.site : (prevE.site||'');
+  document.getElementById('site-inp').value  = e.site!==undefined   ? e.site      : (prevE.site||'');
   document.getElementById('price-inp').value = e.unitPrice!==undefined ? e.unitPrice : (prevE.unitPrice||'');
-  document.getElementById('memo-ta').value = e.memo||'';
+  document.getElementById('memo-ta').value   = e.memo||'';
 
   gsVal = e.gongsu!=null ? e.gongsu : 1;
   isOff = e.isOff||false;
-  isFul = e.isFul||false;
 
   document.getElementById('dir-inp').value =
-    (e.directInput!=='' && e.directInput!=null) ? e.directInput : '';
+    (e.directInput!==''&&e.directInput!=null) ? e.directInput : '';
 
   updateGsDisp();
-  updateChks();
+  updateChk();
 
-  // 힌트
   const hw=document.getElementById('copy-hint-wrap');
   hw.innerHTML='';
   if(!e.site && prevE.site){
-    const hint=document.createElement('div');
-    hint.className='copy-hint';
-    hint.textContent=`← ${prevE.site} (전날 복사됨)`;
-    hw.appendChild(hint);
+    const h=document.createElement('div');
+    h.className='copy-hint';
+    h.textContent=`← ${prevE.site} (전날 복사됨)`;
+    hw.appendChild(h);
   }
 
-  switchTab('gs', document.querySelector('.tbtn'));
+  switchTab('gs',document.querySelector('.tbtn'));
   document.getElementById('cal-page').style.display='none';
   document.getElementById('det').style.display='block';
   window.scrollTo(0,0);
 }
 
 function getPrevKey(y,m,d){
-  const prev=new Date(y,m,d-1);
-  return key(prev.getFullYear(),prev.getMonth(),prev.getDate());
+  const p=new Date(y,m,d-1);
+  return key(p.getFullYear(),p.getMonth(),p.getDate());
 }
 
 function goBack(){
@@ -651,32 +763,23 @@ function goBack(){
   document.getElementById('cal-page').style.display='';
 }
 
-// ── 공수 조작 ──
 function adjGs(delta){
-  gsVal = Math.max(0, Math.round((gsVal+delta)*100)/100);
+  gsVal=Math.max(0,Math.round((gsVal+delta)*100)/100);
   document.getElementById('dir-inp').value='';
   updateGsDisp();
 }
+document.getElementById('dir-inp').addEventListener('input',updateGsDisp);
 
-document.getElementById('dir-inp').addEventListener('input', updateGsDisp);
-
-function updateChks(){
-  const offEl=document.getElementById('chk-off');
-  const fulEl=document.getElementById('chk-ful');
-  offEl.className='chk-item'+(isOff?' on-off':'');
+function updateChk(){
+  const el=document.getElementById('chk-off');
+  el.className='chk-item'+(isOff?' on-off':'');
   document.getElementById('ico-off').textContent=isOff?'✓':'○';
-  fulEl.className='chk-item'+(isFul?' on-ful':'');
-  document.getElementById('ico-ful').textContent=isFul?'✓':'○';
   updateGsDisp();
 }
-
-function togChk(t){
-  if(t==='off'){ isOff=!isOff; if(isOff)isFul=false; }
-  else          { isFul=!isFul; if(isFul)isOff=false; }
-  updateChks();
+function togChk(){
+  isOff=!isOff; updateChk();
 }
 
-// ── 탭 ──
 function switchTab(name,btn){
   document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.tpanel').forEach(p=>p.classList.remove('on'));
@@ -684,32 +787,29 @@ function switchTab(name,btn){
   document.getElementById('tpanel-'+name).classList.add('on');
 }
 
-// ── 저장 ──
 function saveEntry(){
   const di=document.getElementById('dir-inp').value.trim();
-  const entry={
-    site: document.getElementById('site-inp').value.trim(),
+  save(selKey,{
+    site:      document.getElementById('site-inp').value.trim(),
     unitPrice: document.getElementById('price-inp').value.trim(),
-    gongsu: gsVal,
+    gongsu:    gsVal,
     directInput: di!=='' ? parseFloat(di) : '',
-    isOff, isFul,
+    isOff,
     memo: document.getElementById('memo-ta').value.trim(),
-  };
-  save(selKey,entry);
+  });
   document.getElementById('det').style.display='none';
   document.getElementById('cal-page').style.display='';
   renderCal();
 }
 
-// ── 초기화 ──
 renderCal();
 </script>
 <script>
 if("serviceWorker" in navigator){
-  window.addEventListener("load", () => {
+  window.addEventListener("load",()=>{
     navigator.serviceWorker.register("./sw.js")
-      .then(r => console.log("SW registered:", r.scope))
-      .catch(e => console.log("SW failed:", e));
+      .then(r=>console.log("SW:",r.scope))
+      .catch(e=>console.log("SW fail:",e));
   });
 }
 </script>
