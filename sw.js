@@ -1,22 +1,90 @@
-const CACHE = 'gongsu-v1';
-const ASSETS = ['./index.html', './manifest.json', './icon.svg'];
+const CACHE = 'gongsu-v2';
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+const APP_SHELL = [
+  './',
+  './index.html',
+  './manifest.json'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then(keys => {
+        return Promise.all(
+          keys
+            .filter(key => key !== CACHE)
+            .map(key => caches.delete(key))
+        );
+      })
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+self.addEventListener('fetch', event => {
+  if(event.request.method !== 'GET'){
+    return;
+  }
+
+  if(event.request.mode === 'navigate'){
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+
+          caches
+            .open(CACHE)
+            .then(cache => {
+              cache.put('./index.html',copy);
+            });
+
+          return response;
+        })
+        .catch(() => {
+          return caches.match('./index.html');
+        })
+    );
+
+    return;
+  }
+
+  event.respondWith(
+    caches
+      .match(event.request)
+      .then(cached => {
+        if(cached){
+          return cached;
+        }
+
+        return fetch(event.request)
+          .then(response => {
+            if(
+              !response ||
+              response.status !== 200 ||
+              response.type === 'opaque'
+            ){
+              return response;
+            }
+
+            const copy = response.clone();
+
+            caches
+              .open(CACHE)
+              .then(cache => {
+                cache.put(event.request,copy);
+              });
+
+            return response;
+          });
+      })
   );
 });
